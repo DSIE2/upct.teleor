@@ -1,0 +1,72 @@
+enums
+dir ::= left right
+thing ::= bottle drop
+end
+
+percepts
+holding: ()
+see: (thing)
+touching: ()
+over_drop: ()
+end
+
+beliefs
+
+end
+
+durative
+move: (double)
+turn: (dir)
+end
+
+discrete
+open_gripper: ()
+close_gripper: ()
+end
+
+vars
+int _collected := 0
+int _other_collected := 0
+end
+
+goals
+collect_bottles:(string)
+collect_bottles(OtherAg){ 
+ _collected + _other_collected >= 10 -> ()
+ holding & over_drop -> drop_and_leave(OtherAg)
+ holding -> get_to_drop()
+ true -> get_bottle()
+}
+
+drop_and_leave:(string) 
+drop_and_leave(OtherAg){
+ gripper_open -> leave_drop()
+ true -> open_gripper() ++ _collected := _collected + 1; count (_collected) to OtherAg
+}
+
+leave_drop:()
+leave_drop(){
+ not see(drop) & not see(bottle) -> move(1.0)
+ see(drop) -> turn(left, 0.8)
+ see(bottle) -> turn(right, 0.8)
+}
+
+get_to_drop:()
+get_to_drop(){
+ over_drop -> ()
+ see(drop) -> move(1.5)
+ true -> turn(left,1.0) for 2; move(1.0) for 2
+}
+
+get_bottle:()
+get_bottle(){
+ holding -> ()
+ touching & gripper_open -> close_gripper()
+ touching -> open_gripper()
+ see(bottle) -> move(1.5)
+ true -> turn(left,1.0) for 2.8; move(1.0) for 2
+}
+end
+messages
+handle(_,"count", val) -> _other_collected := val
+end
