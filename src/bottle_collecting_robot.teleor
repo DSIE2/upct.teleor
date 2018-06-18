@@ -1,6 +1,6 @@
 enums
-dir ::= left right
-thing ::= bottle drop
+dir ::= left | right
+thing ::= bottle | drop
 end
 
 percepts
@@ -28,12 +28,13 @@ end
 vars
 int _collected := 0
 int _other_collected := 0
+int total := 10
 end
 
 goals
 collect_bottles:(string)
 collect_bottles(OtherAg){ 
- _collected + _other_collected >= 10 -> ()
+ _collected + _other_collected >= total -> ()
  holding() and over_drop() -> drop_and_leave(OtherAg)
  holding() -> get_to_drop()
  true -> get_bottle()
@@ -42,21 +43,22 @@ collect_bottles(OtherAg){
 drop_and_leave:(string) 
 drop_and_leave(OtherAg){
  gripper_open() -> leave_drop()
- true -> open_gripper() ++ _collected := _collected + 1; count (_collected) to OtherAg
+ // Fix issue #2 - removed undefined procedure call
+ true -> open_gripper() ++ _collected := _collected + 1
 }
 
 leave_drop:()
 leave_drop(){
- not see(drop) and not see(bottle) -> move(1.0)
- see(drop) -> turn(left, 0.8)
- see(bottle) -> turn(right, 0.8)
+ not see(thing.drop) and not see(thing.bottle) -> move(1.0)
+ see(thing.drop) -> turn(dir.left, 0.8)
+ see(thing.bottle) -> turn(dir.right, 0.8)
 }
 
 get_to_drop:()
 get_to_drop(){
  over_drop() -> ()
- see(drop) -> move(1.5)
- true -> turn(left,1.0) for 2; move(1.0) for 2
+ see(thing.drop) -> move(1.5)
+ true -> turn(dir.left,1.0) for 2; move(1.0) for 2
 }
 
 get_bottle:()
@@ -64,10 +66,11 @@ get_bottle(){
  holding() -> ()
  touching() and gripper_open() -> close_gripper()
  touching() -> open_gripper()
- see(bottle) -> move(1.5)
- true -> turn(left,1.0) for 2.8; move(1.0) for 2
+ see(thing.bottle) -> move(1.5)
+ true -> turn(dir.left,1.0) for 2.8; move(1.0) for 2
 }
 end
+
 messages
 handle(_,"count", val) -> _other_collected := val
 end
